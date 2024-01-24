@@ -1,0 +1,22 @@
+<scxml 
+  initial="idle" 
+  version="1.0" 
+  name="BatteryDrainerSkillSM"
+  datamodel="cplusplus:BatteryDrainerDataModel:BatteryDrainerDataModel.h"
+  xmlns="http://www.w3.org/2005/07/scxml">
+
+    <state id="drain">
+        <onentry>
+            <script>
+                drain();
+            </script>
+        </onentry>
+        <transition event="CMD_OK" target="idle"/>
+    </state>
+
+    <state id="idle">
+        <transition event="CMD_START" target="drain" />
+    </state>
+    
+</scxml>
+
