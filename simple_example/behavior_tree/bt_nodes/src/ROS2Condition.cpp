@@ -52,8 +52,20 @@ PortsList ROS2Condition::providedPorts()
 }
 
 
-NodeStatus ROS2Condition::tick()
+
+NodeStatus ROS2Action::tick()
 {
-    RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", ConditionNode::name().c_str());
-    return ROS2Node::tick();
+    RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", ActionNodeBase::name().c_str());
+    sendStart();
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));    
+    auto status = ROS2Node::requestAck();
+    switch (status) {
+        case message.SKILL_SUCCESS:
+            return NodeStatus::SUCCESS;
+        case message.SKILL_FAILURE:
+            return NodeStatus::FAILURE;
+        default:
+            break;
+    }
+    return NodeStatus::FAILURE;
 }

@@ -27,7 +27,9 @@ class ROS2Node //: public LeafNode
 public:
     ROS2Node(const std::string& name, const NodeConfiguration& config);
     NodeStatus tick();
-    NodeStatus status();
+    NodeStatus requestAck();
+    int sendStart();
+    int sendStop();
     bool init();
     bool stop();
     // static PortsList providedPorts();
@@ -36,14 +38,16 @@ public:
 
 protected:
     std::shared_ptr<rclcpp::Node> m_node;
-    rclcpp::Client<bt_interfaces::srv::RequestAck>::SharedPtr m_client;
-    rclcpp::Client<bt_interfaces::srv::SendStart>::SharedPtr m_clientStart;
-    rclcpp::Client<bt_interfaces::srv::SendStop>::SharedPtr m_clientStop;
     string m_topicName;
     string m_name;
     string m_suffixMonitor;
+    // mutable int8_t m_bt_request; // mutable because status() is const
+
+private:
     int requestStatus();
     std::mutex m_requestMutex;
-    mutable int8_t m_bt_request; // mutable because status() is const
+    rclcpp::Client<bt_interfaces::srv::RequestAck>::SharedPtr m_client;
+    rclcpp::Client<bt_interfaces::srv::SendStart>::SharedPtr m_clientStart;
+    rclcpp::Client<bt_interfaces::srv::SendStop>::SharedPtr m_clientStop;
 
 };

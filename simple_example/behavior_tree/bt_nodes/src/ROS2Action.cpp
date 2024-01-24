@@ -45,7 +45,22 @@ ROS2Action::ROS2Action(const string name, const NodeConfiguration& config) :
 NodeStatus ROS2Action::tick()
 {
     RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", ActionNodeBase::name().c_str());
-    return ROS2Node::tick();
+    while(!m_started) {
+        m_started = sendStart();
+    }
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));    
+    auto status = ROS2Node::requestAck();
+    switch (status) {
+        case message.SKILL_RUNNING:
+            return NodeStatus::RUNNING;// may be two different enums (ros2 and BT library). Making sure that the return status are the correct ones
+        case message.SKILL_SUCCESS:
+            return NodeStatus::SUCCESS;
+        case message.SKILL_FAILURE:
+            return NodeStatus::FAILURE;
+        default:
+            break;
+    }
+    return NodeStatus::FAILURE;
 }
 
 PortsList ROS2Action::providedPorts()
@@ -59,6 +74,7 @@ PortsList ROS2Action::providedPorts()
 void ROS2Action::halt()
 {
     RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "Node %s sending halt to skill", ActionNodeBase::name().c_str());
-    // m_bt_request.send_stop();
-    // send halt request to server
+    while(m_started) {
+        m_started = !sendStop();
+    }
 }

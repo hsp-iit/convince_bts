@@ -56,82 +56,25 @@ bool ROS2Node::stop()
 }
 
 
-NodeStatus ROS2Node::tick()
+NodeStatus ROS2Node::requestAck()
 {
-
     auto message = bt_interfaces::msg::RequestAck();
-    // yDebug() << "Node" << name << "ticked";
-    // SkillAck status = m_bt_request.request_ack();
-    int status = requestStatus();
-    if(status == message.SKILL_IDLE)
-    {
-      // m_bt_request.send_start();
-      std::this_thread::sleep_for (std::chrono::milliseconds(100));
-    }
-    // status = m_bt_request.request_ack();
-    while(status == message.SKILL_IDLE)
-    {
-        // status = m_bt_request.request_ack();
+    int status;
+    do {
+        status = requestStatus();
         std::this_thread::sleep_for (std::chrono::milliseconds(100));
-        // yDebug() << "Node" << name  << " status " << int(status) << "WAITING";
-
-    }
-
-    switch (status) {
-        case message.SKILL_RUNNING:
-        //    yDebug() << "Node" << name << "returns running";
-            return NodeStatus::RUNNING;// may be two different enums (thrift and BT library). Making sure that the return status are the correct ones
-        case message.SKILL_SUCCESS:
-        //    yDebug() << "Node" << name << "returns success";
-            return NodeStatus::SUCCESS;
-        case message.SKILL_FAILURE:
-        //    yDebug() << "Node" << name << "returns failure";
-            return NodeStatus::FAILURE;
-        default:
-        //    yError() << "Invalid return status "<< status << "  received by node"   << name;
-            break;
-    }
-
-    return NodeStatus::FAILURE;
+    } while(status == message.SKILL_IDLE)
+    return status;
 }
 
 
-NodeStatus ROS2Node::status()
-{
-    auto message = bt_interfaces::msg::RequestAck();
-    // yDebug() << "Node" << name << "getting status";
-    // SkillAck status = m_bt_request.request_ack();
-    // TODO send a request on topic ;
-    int status = requestStatus();
-    switch (status) {
-        case message.SKILL_RUNNING:
-        //    yDebug() << "Node" << name << "returns running";
-            return NodeStatus::RUNNING;// may be two different enums (thrift and BT library). Making sure that the return status are the correct ones
-        case message.SKILL_SUCCESS:
-        //    yDebug() << "Node" << name << "returns success";
-            return NodeStatus::SUCCESS;
-        case message.SKILL_FAILURE:
-        //    yDebug() << "Node" << name << "returns failure";
-            return NodeStatus::FAILURE;
-        case message.SKILL_IDLE:
-        //    yDebug() << "Node" << name << "returns failure";
-            return NodeStatus::IDLE;
-        default:
-        //    yError() << "Invalid return status for received by node " << name;
-            return NodeStatus::FAILURE;
-    }
-}
-
-
-int ROS2Node::requestStatus() 
-{
+ROS2Node::sendStart() {
     std::lock_guard<std::mutex> lock(m_requestMutex);
-    auto msg = bt_interfaces::msg::RequestAck();
     auto requestStart = std::make_shared<bt_interfaces::srv::SendStart::Request>();
     while (!m_clientStart->wait_for_service(1s)) {
         if (!rclcpp::ok()) {
         RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the service start. Exiting.");
-        return 0;
+        return false;
         }
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "service start not available, waiting again..." << m_name);
     }
@@ -140,22 +83,56 @@ int ROS2Node::requestStatus()
     std::this_thread::sleep_for (std::chrono::milliseconds(100));
     if (rclcpp::spin_until_future_complete(m_node, resultStart) ==
         rclcpp::FutureReturnCode::SUCCESS) {
-        auto request = std::make_shared<bt_interfaces::srv::RequestAck::Request>();
+        return true;
+    }
+    return false;
+}
 
-        while (!m_client->wait_for_service(1s)) {
-            if (!rclcpp::ok()) {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the service RequestAck. Exiting.");
-            return 0;
-            }
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service RequestAck not available, waiting again...");
-        }
 
-        auto result = m_client->async_send_request(request);
-        std::this_thread::sleep_for (std::chrono::milliseconds(100));
-        if (rclcpp::spin_until_future_complete(m_node, result) ==
-            rclcpp::FutureReturnCode::SUCCESS) {
-            return result.get()->status.status;
+ROS2Node::sendStop() {
+    std::lock_guard<std::mutex> lock(m_requestMutex);
+    auto requestStop = std::make_shared<bt_interfaces::srv::SendStop::Request>();
+    while (!m_clientStop->wait_for_service(1s)) {
+        if (!rclcpp::ok()) {
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the service start. Exiting.");
+        return false;
         }
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "service start not available, waiting again..." << m_name);
+    }
+    auto resultStop = m_clientStop->async_send_request(requestStop);
+
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+    if (rclcpp::spin_until_future_complete(m_node, resultStop) ==
+        rclcpp::FutureReturnCode::SUCCESS) {
+        return true;
+    }
+    return false;
+}
+
+
+NodeStatus ROS2Node::tick() //this need to be overwritten
+{
+    return NodeStatus::FAILURE;
+}
+
+
+int ROS2Node::requestStatus() 
+{
+    std::lock_guard<std::mutex> lock(m_requestMutex);
+    auto msg = bt_interfaces::msg::RequestAck();
+    auto request = std::make_shared<bt_interfaces::srv::RequestAck::Request>();
+    while (!m_client->wait_for_service(1s)) {
+        if (!rclcpp::ok()) {
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the service RequestAck. Exiting.");
+        return msg.SKILL_FAILURE;
+        }
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service RequestAck not available, waiting again...");
+    }
+    auto result = m_client->async_send_request(request);
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+    if (rclcpp::spin_until_future_complete(m_node, result) ==
+        rclcpp::FutureReturnCode::SUCCESS) {
+        return result.get()->status.status;
     }
     return msg.SKILL_FAILURE;
 }

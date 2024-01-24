@@ -24,5 +24,8 @@ public:
     NodeStatus tick() override;
 
     static PortsList providedPorts();
+
+private:
+    bool m_started{false};
 };
 
