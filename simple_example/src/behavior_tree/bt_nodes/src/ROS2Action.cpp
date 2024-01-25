@@ -48,7 +48,7 @@ NodeStatus ROS2Action::tick()
     while(!m_started) {
         m_started = sendStart();
     }
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp") << "Node " << ActionNodeBase::name().c_str() << " sending tick to skill, started = " << m_started);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Node " << ActionNodeBase::name().c_str() << " sending tick to skill, started = " << m_started);
 
     std::this_thread::sleep_for (std::chrono::milliseconds(100));    
     auto status = ROS2Node::requestAck();
