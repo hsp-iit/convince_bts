@@ -45,10 +45,11 @@ ROS2Action::ROS2Action(const string name, const NodeConfiguration& config) :
 NodeStatus ROS2Action::tick()
 {
     auto message = bt_interfaces::msg::RequestAck();
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", ActionNodeBase::name().c_str());
     while(!m_started) {
         m_started = sendStart();
     }
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp") << "Node " << ActionNodeBase::name().c_str() << " sending tick to skill, started = " << m_started);
+
     std::this_thread::sleep_for (std::chrono::milliseconds(100));    
     auto status = ROS2Node::requestAck();
     switch (status) {
@@ -74,7 +75,7 @@ PortsList ROS2Action::providedPorts()
 
 void ROS2Action::halt()
 {
-    RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "Node %s sending halt to skill", ActionNodeBase::name().c_str());
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Node %s sending halt to skill", ActionNodeBase::name().c_str());
     while(m_started) {
         m_started = !sendStop();
     }
