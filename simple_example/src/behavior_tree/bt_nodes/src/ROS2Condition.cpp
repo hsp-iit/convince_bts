@@ -56,7 +56,7 @@ PortsList ROS2Condition::providedPorts()
 NodeStatus ROS2Condition::tick()
 {
     auto message = bt_interfaces::msg::RequestAck();
-    RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", m_name.c_str());
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", ConditionNode::name().c_str());
     sendStart();
     std::this_thread::sleep_for (std::chrono::milliseconds(100));    
     auto status = ROS2Node::requestAck();

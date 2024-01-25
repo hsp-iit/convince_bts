@@ -45,7 +45,7 @@ ROS2Action::ROS2Action(const string name, const NodeConfiguration& config) :
 NodeStatus ROS2Action::tick()
 {
     auto message = bt_interfaces::msg::RequestAck();
-    RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", ActionNodeBase::name().c_str());
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Node %s sending tick to skill", ActionNodeBase::name().c_str());
     while(!m_started) {
         m_started = sendStart();
     }
