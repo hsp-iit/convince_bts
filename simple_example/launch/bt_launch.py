@@ -8,7 +8,6 @@ def generate_launch_description():
             package='alarm_battery_low_skill',
             executable='alarm_battery_low_skill',
             output='screen'
-            # arguments=['--ros-args', '--log-level', 'debug']
         ),
         Node(
             package='battery_drainer_skill',
@@ -26,7 +25,7 @@ def generate_launch_description():
         Node(
             package='bt_executable',
             executable='bt_executable',
-            arguments=[ './BT/simple_bt.xml']
+            arguments=[ './src/behavior_tree/BT/simple_bt.xml']
         )
     ])
 
