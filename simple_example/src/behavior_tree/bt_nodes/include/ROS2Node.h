@@ -27,9 +27,9 @@ class ROS2Node //: public LeafNode
 public:
     ROS2Node(const std::string& name, const NodeConfiguration& config);
     NodeStatus tick();
-    NodeStatus requestAck();
-    int sendStart();
-    int sendStop();
+    int requestAck();
+    bool sendStart();
+    bool sendStop();
     bool init();
     bool stop();
     // static PortsList providedPorts();

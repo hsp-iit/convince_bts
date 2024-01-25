@@ -1,28 +1,24 @@
 cmake_minimum_required(VERSION 3.8)
-project(bt_executable)
-
+project(bt_interfaces)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(bt_nodes REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(bt_interfaces REQUIRED)
-find_package(behaviortree_cpp_v3 REQUIRED)
-
-add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp )
-
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-ament_target_dependencies(${PROJECT_NAME} bt_nodes bt_interfaces rclcpp behaviortree_cpp_v3)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../BT/simple_bt.xml simple_bt.xml COPYONLY)
 
+find_package(rosidl_default_generators REQUIRED)
 
-install(TARGETS ${PROJECT_NAME}
-DESTINATION lib/${PROJECT_NAME})
+rosidl_generate_interfaces(${PROJECT_NAME}
+"srv/RequestAck.srv"
+"msg/RequestAck.msg"
+"srv/SendStart.srv"
+"srv/SendStop.srv"
+LIBRARY_NAME ${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

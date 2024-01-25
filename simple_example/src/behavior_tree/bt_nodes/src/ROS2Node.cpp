@@ -56,19 +56,19 @@ bool ROS2Node::stop()
 }
 
 
-NodeStatus ROS2Node::requestAck()
+int ROS2Node::requestAck()
 {
     auto message = bt_interfaces::msg::RequestAck();
     int status;
     do {
         status = requestStatus();
         std::this_thread::sleep_for (std::chrono::milliseconds(100));
-    } while(status == message.SKILL_IDLE)
+    } while(status == message.SKILL_IDLE);
     return status;
 }
 
 
-ROS2Node::sendStart() {
+bool ROS2Node::sendStart() {
     std::lock_guard<std::mutex> lock(m_requestMutex);
     auto requestStart = std::make_shared<bt_interfaces::srv::SendStart::Request>();
     while (!m_clientStart->wait_for_service(1s)) {
@@ -89,7 +89,7 @@ ROS2Node::sendStart() {
 }
 
 
-ROS2Node::sendStop() {
+bool ROS2Node::sendStop() {
     std::lock_guard<std::mutex> lock(m_requestMutex);
     auto requestStop = std::make_shared<bt_interfaces::srv::SendStop::Request>();
     while (!m_clientStop->wait_for_service(1s)) {
