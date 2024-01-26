@@ -45,10 +45,11 @@ ROS2Action::ROS2Action(const string name, const NodeConfiguration& config) :
 NodeStatus ROS2Action::tick()
 {
     auto message = bt_interfaces::msg::RequestAck();
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Node " << ActionNodeBase::name().c_str() << " sending tick to skill, started = " << m_started);
+
     while(!m_started) {
         m_started = sendStart();
     }
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Node " << ActionNodeBase::name().c_str() << " sending tick to skill, started = " << m_started);
 
     std::this_thread::sleep_for (std::chrono::milliseconds(100));    
     auto status = ROS2Node::requestAck();
