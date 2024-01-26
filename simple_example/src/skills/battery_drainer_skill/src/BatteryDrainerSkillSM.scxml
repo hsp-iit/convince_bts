@@ -11,11 +11,17 @@
                 drain();
             </script>
         </onentry>
-        <transition event="CMD_OK" target="idle"/>
+        <transition event="CMD_OK" target="active"/>
+        <transition event="CMD_STOP" target="idle" />
+    </state>
+
+    <state id="active">
+        <transition event="CMD_DRAIN" target="drain" />
+        <transition event="CMD_STOP" target="idle" />
     </state>
 
     <state id="idle">
-        <transition event="CMD_START" target="drain" />
+        <transition event="CMD_START" target="active" />
     </state>
     
 </scxml>

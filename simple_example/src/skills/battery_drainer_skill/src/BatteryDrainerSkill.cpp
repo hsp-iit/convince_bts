@@ -68,10 +68,13 @@ void BatteryDrainerSkill::request_ack( [[maybe_unused]] const std::shared_ptr<bt
         for (const auto& state : m_stateMachine.activeStateNames()) {
             if (state == "drain") {
                 m_stateMachine.submitEvent("CMD_OK");
+                response->status.status = message.SKILL_SUCCESS;
+            }
+            if (state == "active") {
+                m_stateMachine.submitEvent("CMD_DRAIN");
                 response->status.status = message.SKILL_RUNNING;
             }
             if (state == "idle") {
-                m_stateMachine.submitEvent("CMD_OK");
                 response->status.status = message.SKILL_IDLE;
             }
         }
