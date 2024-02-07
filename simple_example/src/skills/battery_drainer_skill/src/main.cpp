@@ -14,7 +14,7 @@
 int main(int argc, char *argv[])
 {
   QCoreApplication app(argc, argv);
-  BatteryDrainerSkill stateMachine("BatteryDrainerSkill");
+  BatteryDrainerSkill stateMachine("BatteryDrainer");
   stateMachine.start(argc, argv);
 
   int ret=app.exec();

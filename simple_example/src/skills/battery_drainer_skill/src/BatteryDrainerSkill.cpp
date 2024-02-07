@@ -16,7 +16,7 @@
 BatteryDrainerSkill::BatteryDrainerSkill(std::string name ) :
         m_name(std::move(name))
 {
-    m_dataModel.set_name(name+"dataModel");
+    m_dataModel.set_name(m_name);
     m_stateMachine.setDataModel(&m_dataModel);
 }
 
@@ -30,72 +30,73 @@ void BatteryDrainerSkill::spin(std::shared_ptr<rclcpp::Node> node)
 
 bool BatteryDrainerSkill::start(int argc, char*argv[])
 {
-
+    std::lock_guard<std::mutex> lock(m_requestMutex);
     if(!rclcpp::ok())
     {
         rclcpp::init(/*argc*/ argc, /*argv*/ argv);
     }
-    m_node = rclcpp::Node::make_shared(m_name);
 
-    
-    RCLCPP_DEBUG(m_node->get_logger(), "BatteryDrainerSkill::start");
-    std::cout << "BatteryDrainerSkill::start";
-    m_requestAckService = m_node->create_service<bt_interfaces::srv::RequestAck>("/BatteryDrainerSkill/RequestAck",  
-                                                                                std::bind(&BatteryDrainerSkill::request_ack,
-                                                                                this,
-                                                                                std::placeholders::_1,
-                                                                                std::placeholders::_2));
-    m_sendStartService = m_node->create_service<bt_interfaces::srv::SendStart>("/BatteryDrainerSkill/SendStart",  
-                                                                                std::bind(&BatteryDrainerSkill::send_start,
-                                                                                this,
-                                                                                std::placeholders::_1,
-                                                                                std::placeholders::_2));
-    m_sendStopService = m_node->create_service<bt_interfaces::srv::SendStop>("/BatteryDrainerSkill/SendStop",  
-                                                                                std::bind(&BatteryDrainerSkill::send_stop,
-                                                                                this,
-                                                                                std::placeholders::_1,
-                                                                                std::placeholders::_2));
+    m_node = rclcpp::Node::make_shared(m_name + "Skill");
+    m_tickService = m_node->create_service<bt_interfaces::srv::TickAction>(m_name + "Skill/tick",  std::bind(&BatteryDrainerSkill::tick,
+                                                                                                                 this,
+                                                                                                                 std::placeholders::_1,
+                                                                                                                 std::placeholders::_2));
+    m_haltService = m_node->create_service<bt_interfaces::srv::HaltAction>(m_name + "Skill/halt",  std::bind(&BatteryDrainerSkill::halt,
+                                                                                                                 this,
+                                                                                                                 std::placeholders::_1,
+                                                                                                                 std::placeholders::_2));
+                                                                                                                 
 
     m_stateMachine.start();
     m_threadSpin = std::make_shared<std::thread>(spin, m_node);
     return true;
 }
 
-void BatteryDrainerSkill::request_ack( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::RequestAck::Request> request,
-                                       std::shared_ptr<bt_interfaces::srv::RequestAck::Response>      response)
+
+void BatteryDrainerSkill::tick( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::TickAction::Request> request,
+                                       std::shared_ptr<bt_interfaces::srv::TickAction::Response>      response)
 {
-    auto message = bt_interfaces::msg::RequestAck();
+    std::lock_guard<std::mutex> lock(m_requestMutex);
+    RCLCPP_DEBUG_STREAM(m_node->get_logger(), "BatteryDrainerSkill::tick" << m_stateMachine.activeStateNames().size());
+
+    for (const auto& state : m_stateMachine.activeStateNames()) {
+        RCLCPP_DEBUG_STREAM(m_node->get_logger(), state.toStdString());
+        auto message = bt_interfaces::msg::ActionResponse();
+        if (state == "drain") {
+            response->status.status = message.SKILL_RUNNING;
+            m_stateMachine.submitEvent("CMD_SUCCESS");
+            break;
+        } else if (state == "idle") {
+            response->status.status = message.SKILL_RUNNING; //here goes also the initialisation
+            m_stateMachine.submitEvent("CMD_START");
+            break;
+        } else if (state == "active") {
+            response->status.status = message.SKILL_RUNNING;
+            m_stateMachine.submitEvent("CMD_DRAIN");
+            break;
+        } else if (state == "success") {
+            response->status.status = message.SKILL_SUCCESS;
+            m_stateMachine.submitEvent("CMD_OK");
+            break;
+        }
+    }
+    response->is_ok = true;
+}
+
+void BatteryDrainerSkill::halt( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::HaltAction::Request> request,
+               [[maybe_unused]] std::shared_ptr<bt_interfaces::srv::HaltAction::Response> response)
+{
+    std::lock_guard<std::mutex> lock(m_requestMutex);
+    bool halted = false;
+
+    do {
         for (const auto& state : m_stateMachine.activeStateNames()) {
-            if (state == "drain") {
-                m_stateMachine.submitEvent("CMD_OK");
-                response->status.status = message.SKILL_SUCCESS;
-            }
-            if (state == "active") {
-                m_stateMachine.submitEvent("CMD_DRAIN");
-                response->status.status = message.SKILL_RUNNING;
-            }
+            RCLCPP_DEBUG_STREAM(m_node->get_logger(), state.toStdString());
             if (state == "idle") {
-                response->status.status = message.SKILL_IDLE;
+                halted = true;
+            } else {
+                m_stateMachine.submitEvent("CMD_HALT");
             }
         }
-    response->is_ok = true;
-}
-
-void BatteryDrainerSkill::send_start( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::SendStart::Request> request,
-                                       [[maybe_unused]] std::shared_ptr<bt_interfaces::srv::SendStart::Response>      response)
-{
-    RCLCPP_DEBUG(m_node->get_logger(), "BatteryDrainerSkill::send_start");    
-    std::cout << "BatteryDrainerSkill::send_start";    
-    m_stateMachine.submitEvent("CMD_START");
-    response->is_ok = true;
-}
-
-void BatteryDrainerSkill::send_stop( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::SendStop::Request> request,
-                                       [[maybe_unused]] std::shared_ptr<bt_interfaces::srv::SendStop::Response>      response)
-{
-
-    RCLCPP_DEBUG(m_node->get_logger(), "BatteryDrainerSkill::send_start");    
-    std::cout <<  "BatteryDrainerSkill::send_stop";    
-    m_stateMachine.submitEvent("CMD_STOP",  QStateMachine::HighPriority);
-    response->is_ok = true;
+    } while (!halted);
 }

@@ -25,8 +25,8 @@ bool BatteryDrainerDataModel::setup(const QVariantMap &initialDataValues)
         rclcpp::init(/*argc*/ 0, /*argv*/ nullptr);
     }
 
-    m_node = rclcpp::Node::make_shared(m_name);
-    m_client = m_node->create_client<other_interfaces::srv::RpcWithoutParameters>("/BatteryDrainerComponent/Drain");
+    m_node = rclcpp::Node::make_shared(m_name + "DataModel");
+    m_client = m_node->create_client<other_interfaces::srv::RpcWithoutParameters>(m_name + "Component/Drain");
 
     RCLCPP_DEBUG(m_node->get_logger(), "BatteryDrainerDataModel::start");
     std::cout << "BatteryDrainerDataModel::start";

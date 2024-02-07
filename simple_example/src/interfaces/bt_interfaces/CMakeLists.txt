@@ -13,10 +13,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-"srv/RequestAck.srv"
-"msg/RequestAck.msg"
-"srv/SendStart.srv"
-"srv/SendStop.srv"
+"srv/TickAction.srv"
+"msg/ActionResponse.msg"
+"msg/ConditionResponse.msg"
+"srv/HaltAction.srv"
+"srv/TickCondition.srv"
 LIBRARY_NAME ${PROJECT_NAME}
 )
 

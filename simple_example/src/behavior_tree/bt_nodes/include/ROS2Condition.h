@@ -12,15 +12,27 @@
 
 #pragma once
 
-#include <ROS2Node.h>
+#include <bt_interfaces/msg/condition_response.hpp>
+#include <mutex>
+#include <bt_interfaces/srv/tick_condition.hpp>
 #include <string>
 #include<behaviortree_cpp_v3/condition_node.h>
+#include <rclcpp/rclcpp.hpp>
 
-class ROS2Condition :  public ConditionNode, public ROS2Node
+class ROS2Condition :  public BT::ConditionNode
 {
 public:
-    ROS2Condition(const string name, const NodeConfiguration& config);
-    NodeStatus tick() override;
+    ROS2Condition(const std::string name, const BT::NodeConfiguration& config);
+    BT::NodeStatus tick() override;
+    int sendTickToSkill();
+    static BT::PortsList providedPorts();
+    bool init();
+    bool stop();
 
-    static PortsList providedPorts();
+private:
+    std::mutex m_requestMutex;
+    rclcpp::Client<bt_interfaces::srv::TickCondition>::SharedPtr m_clientTick;
+    std::shared_ptr<rclcpp::Node> m_node;
+    std::string m_name;
+    std::string m_suffixMonitor;
 };

@@ -35,21 +35,16 @@ bool AlarmBatteryLowSkill::start(int argc, char*argv[])
         rclcpp::init(/*argc*/ argc, /*argv*/ argv);
     }
 
-    m_node = rclcpp::Node::make_shared(m_name);
-    m_requestAckService = m_node->create_service<bt_interfaces::srv::RequestAck>("/AlarmBatteryLowSkill/RequestAck",  std::bind(&AlarmBatteryLowSkill::request_ack,
+    m_node = rclcpp::Node::make_shared(m_name + "Skill");
+    m_tickService = m_node->create_service<bt_interfaces::srv::TickAction>(m_name + "Skill/tick",  std::bind(&AlarmBatteryLowSkill::tick,
                                                                                                                  this,
                                                                                                                  std::placeholders::_1,
                                                                                                                  std::placeholders::_2));
-    m_sendStartService = m_node->create_service<bt_interfaces::srv::SendStart>("/AlarmBatteryLowSkill/SendStart",  std::bind(&AlarmBatteryLowSkill::send_start,
+    m_haltService = m_node->create_service<bt_interfaces::srv::HaltAction>(m_name + "Skill/halt",  std::bind(&AlarmBatteryLowSkill::halt,
                                                                                                                  this,
                                                                                                                  std::placeholders::_1,
                                                                                                                  std::placeholders::_2));
                                                                                                                  
-    m_sendStopService = m_node->create_service<bt_interfaces::srv::SendStop>("/AlarmBatteryLowSkill/SendStop",  std::bind(&AlarmBatteryLowSkill::send_stop,
-                                                                                                                 this,
-                                                                                                                 std::placeholders::_1,
-                                                                                                                 std::placeholders::_2));
-
     RCLCPP_DEBUG(m_node->get_logger(), "AlarmBatteryLowSkill::start");
     std::cout << "AlarmBatteryLowSkill::start";
 
@@ -58,38 +53,31 @@ bool AlarmBatteryLowSkill::start(int argc, char*argv[])
     return true;
 }
 
-void AlarmBatteryLowSkill::request_ack( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::RequestAck::Request> request,
-                                       std::shared_ptr<bt_interfaces::srv::RequestAck::Response>      response)
+
+
+void AlarmBatteryLowSkill::tick( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::TickAction::Request> request,
+                                       std::shared_ptr<bt_interfaces::srv::TickAction::Response>      response)
 {
-    RCLCPP_DEBUG(m_node->get_logger(), "AlarmBatteryLowSkill::request_ack");
-    std::cout << "AlarmBatteryLowSkill::request_ack";
+    RCLCPP_DEBUG(m_node->get_logger(), "AlarmBatteryLowSkill::tick");
+    std::cout << "AlarmBatteryLowSkill::tick";
     for (const auto& state : m_stateMachine.activeStateNames()) {
             std::cout << state.toStdString() << std::endl;
-            auto message = bt_interfaces::msg::RequestAck();
+            auto message = bt_interfaces::msg::ActionResponse();
             if (state == "alarm") {
+                response->status.status = message.SKILL_SUCCESS;
+            } else if (state == "idle") {
+                response->status.status = message.SKILL_RUNNING; //here goes also the initialisation
+                m_stateMachine.submitEvent("CMD_START");
+            } else if (state == "ready") {
                 response->status.status = message.SKILL_RUNNING;
-            } else {
-                response->status.status = message.SKILL_IDLE;
+                m_stateMachine.submitEvent("CMD_ALARM");
             }
     }
     response->is_ok = true;
-
 }
 
-void AlarmBatteryLowSkill::send_start( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::SendStart::Request> request,
-                                       [[maybe_unused]] std::shared_ptr<bt_interfaces::srv::SendStart::Response>      response)
+void AlarmBatteryLowSkill::halt( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::HaltAction::Request> request,
+               [[maybe_unused]] std::shared_ptr<bt_interfaces::srv::HaltAction::Response> response)
 {
-    RCLCPP_DEBUG(m_node->get_logger(), "AlarmBatteryLowSkill::send_start");    
-    std::cout << "AlarmBatteryLowSkill::send_start";    
-    m_stateMachine.submitEvent("CMD_START");
-    response->is_ok = true;
-
-}
-
-void AlarmBatteryLowSkill::send_stop( [[maybe_unused]] const std::shared_ptr<bt_interfaces::srv::SendStop::Request> request,
-                                       [[maybe_unused]] std::shared_ptr<bt_interfaces::srv::SendStop::Response>      response)
-{
-    std::cout <<  "AlarmBatteryLowSkill::send_stop";    
-    m_stateMachine.submitEvent("CMD_STOP",  QStateMachine::HighPriority);
-    response->is_ok = true;
+    m_stateMachine.submitEvent("CMD_HALT");
 }

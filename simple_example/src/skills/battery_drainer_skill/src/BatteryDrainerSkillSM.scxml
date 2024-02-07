@@ -5,19 +5,24 @@
   datamodel="cplusplus:BatteryDrainerDataModel:BatteryDrainerDataModel.h"
   xmlns="http://www.w3.org/2005/07/scxml">
 
+    <state id="success">
+        <transition event="CMD_OK" target="idle" />
+        <transition event="CMD_HALT" target="idle" />
+    </state>
+
     <state id="drain">
         <onentry>
             <script>
                 drain();
             </script>
         </onentry>
-        <transition event="CMD_OK" target="active"/>
-        <transition event="CMD_STOP" target="idle" />
+        <transition event="CMD_SUCCESS" target="success"/>
+        <transition event="CMD_HALT" target="idle" />
     </state>
 
     <state id="active">
         <transition event="CMD_DRAIN" target="drain" />
-        <transition event="CMD_STOP" target="idle" />
+        <transition event="CMD_HALT" target="idle" />
     </state>
 
     <state id="idle">

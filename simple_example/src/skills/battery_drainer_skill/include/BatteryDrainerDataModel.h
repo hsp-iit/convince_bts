@@ -28,7 +28,7 @@ public:
 private: 
     std::shared_ptr<rclcpp::Node> m_node;
     rclcpp::Client<other_interfaces::srv::RpcWithoutParameters>::SharedPtr m_client;
-    std::string m_name = "BatteryDrainerDataModel";
+    std::string m_name = "";
 };
 
 Q_DECLARE_METATYPE(::BatteryDrainerDataModel*)

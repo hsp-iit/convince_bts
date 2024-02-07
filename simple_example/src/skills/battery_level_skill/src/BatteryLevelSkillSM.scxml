@@ -27,7 +27,6 @@
 
     <state id="failure">
         <transition event="CMD_OK" target="idle" />
-
     </state>
 </scxml>
 

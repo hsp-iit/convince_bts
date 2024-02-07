@@ -6,17 +6,23 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='alarm_battery_low_skill',
-            executable='alarm_battery_low_skill',
-            output='screen'
+            executable='alarm_battery_low_skill'
+            # output='screen',
+            # arguments=['--ros-args', '--log-level', 'debug']
+
         ),
         Node(
             package='battery_drainer_skill',
             executable='battery_drainer_skill',
-            output='screen'
+            prefix=['xterm -e gdb -ex run --args']
+            # output='screen',
+            # arguments=['--ros-args', '--log-level', 'debug']
         ),
         Node(
             package='battery_level_skill',
             executable='battery_level_skill'
+            # output='screen',
+            # arguments=['--ros-args', '--log-level', 'debug']
         ),
         Node(
             package='battery_drainer_component',

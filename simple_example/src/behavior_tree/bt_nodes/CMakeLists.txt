@@ -15,8 +15,6 @@ find_package(ament_cmake REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 
 add_library(${PROJECT_NAME} 
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/ROS2Node.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/ROS2Node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/ROS2Action.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ROS2Action.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/ROS2Condition.h 

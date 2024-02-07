@@ -25,7 +25,7 @@ bool BatteryLevelDataModel::setup(const QVariantMap &initialDataValues)
     {
         rclcpp::init(/*argc*/ 0, /*argv*/ nullptr);
     }
-    m_node = rclcpp::Node::make_shared(m_name);
+    m_node = rclcpp::Node::make_shared(m_name + "DataModel");
 
     m_subscription = m_node->create_subscription<sensor_msgs::msg::BatteryState>(
      "/battery_status", 10, std::bind(&BatteryLevelDataModel::topic_callback, this, std::placeholders::_1));

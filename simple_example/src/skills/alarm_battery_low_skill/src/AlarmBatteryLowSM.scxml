@@ -8,6 +8,10 @@
       <transition event="CMD_START" target="alarm" />
     </state>
 
+    <state id="ready">
+      <transition event="CMD_ALARM" target="alarm" />
+    </state>
+
 
     <state id="alarm">
     </state>

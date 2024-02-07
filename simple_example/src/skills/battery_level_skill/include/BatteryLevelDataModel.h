@@ -31,10 +31,9 @@ public:
 private: 
     std::shared_ptr<rclcpp::Node> m_node;
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr m_subscription;
-    std::string m_name = "BatteryLevelDataModel";
+    std::string m_name = "";
     double m_level = 100.0;
     std::shared_ptr<std::thread> m_thread;
-    // bool m_setupDone {false};
 };
 
 Q_DECLARE_METATYPE(::BatteryLevelDataModel*)
