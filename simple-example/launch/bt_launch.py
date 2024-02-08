@@ -13,8 +13,7 @@ def generate_launch_description():
         ),
         Node(
             package='battery_drainer_skill',
-            executable='battery_drainer_skill',
-            prefix=['xterm -e gdb -ex run --args']
+            executable='battery_drainer_skill'
             # output='screen',
             # arguments=['--ros-args', '--log-level', 'debug']
         ),
